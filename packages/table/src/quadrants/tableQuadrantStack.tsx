@@ -577,20 +577,20 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
         const { rowHeader, columnHeader } = this.quadrantRefs[QuadrantType.MAIN];
 
         // batched reads to prevent DOM thrashing:
-        const rowHeaderWidth = rowHeader == null ? 0 : rowHeader.getBoundingClientRect().width; // TODO: FORCED_REFLOW (x)
-        const columnHeaderHeight = columnHeader == null ? 0 : columnHeader.getBoundingClientRect().height; // TODO: FORCED_REFLOW (x)
-        const scrollbarWidth = mainQuadrantScrollElement.offsetWidth - mainQuadrantScrollElement.clientWidth; // TODO: FORCED_REFLOW (x)
-        const scrollbarHeight = mainQuadrantScrollElement.offsetHeight - mainQuadrantScrollElement.clientHeight; // TODO: FORCED_REFLOW (x)
+        const rowHeaderWidth = rowHeader == null ? 0 : rowHeader.getBoundingClientRect().width;
+        const columnHeaderHeight = columnHeader == null ? 0 : columnHeader.getBoundingClientRect().height;
+        const scrollbarWidth = mainQuadrantScrollElement.offsetWidth - mainQuadrantScrollElement.clientWidth;
+        const scrollbarHeight = mainQuadrantScrollElement.offsetHeight - mainQuadrantScrollElement.clientHeight;
 
         // no need to sync the main quadrant, because it fills the entire viewport
-        topQuadrantElement.style.height = `${topQuadrantGridContentHeight + columnHeaderHeight}px`; // TODO: FORCED_REFLOW (x)
-        leftQuadrantElement.style.width = `${leftQuadrantGridContentWidth + rowHeaderWidth}px`; // TODO: FORCED_REFLOW (x)
-        topLeftQuadrantElement.style.width = `${leftQuadrantGridContentWidth + rowHeaderWidth}px`; // TODO: FORCED_REFLOW (x)
-        topLeftQuadrantElement.style.height = `${topQuadrantGridContentHeight + columnHeaderHeight}px`; // TODO: FORCED_REFLOW (x)
+        topQuadrantElement.style.height = `${topQuadrantGridContentHeight + columnHeaderHeight}px`;
+        leftQuadrantElement.style.width = `${leftQuadrantGridContentWidth + rowHeaderWidth}px`;
+        topLeftQuadrantElement.style.width = `${leftQuadrantGridContentWidth + rowHeaderWidth}px`;
+        topLeftQuadrantElement.style.height = `${topQuadrantGridContentHeight + columnHeaderHeight}px`;
 
         // resize the top and left quadrants to keep the main quadrant's scrollbar visible
-        topQuadrantElement.style.right = `${scrollbarWidth}px`; // TODO: FORCED_REFLOW (x)
-        leftQuadrantElement.style.bottom = `${scrollbarHeight}px`; // TODO: FORCED_REFLOW (x)
+        topQuadrantElement.style.right = `${scrollbarWidth}px`;
+        leftQuadrantElement.style.bottom = `${scrollbarHeight}px`;
 
         // resize top and top-left quadrant row headers if main quadrant scrolls
         this.maybeSyncRowHeaderSize(topQuadrantRowHeaderElement, rowHeaderWidth);
@@ -604,7 +604,7 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
         const selector = `.${Classes.TABLE_ROW_HEADERS_CELLS_CONTAINER}`;
         // this child element dictates the width of all row-header cells
         const elementToResize = rowHeaderElement.querySelector(selector) as HTMLElement;
-        elementToResize.style.width = `${width}px`; // TODO: FORCED_REFLOW (x)
+        elementToResize.style.width = `${width}px`;
     }
 
     // Helpers
@@ -640,10 +640,10 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
 
             // sync the corresponding scroll position of all dependent quadrants
             // batch reads and writes to avoid DOM thrashing
-            const nextScrollPosition = this.quadrantRefs[quadrantType].scrollContainer[scrollKey] + delta; // TODO: FORCED_REFLOW (x)
-            this.quadrantRefs[quadrantType].scrollContainer[scrollKey] = nextScrollPosition; // TODO: FORCED_REFLOW (x)
+            const nextScrollPosition = this.quadrantRefs[quadrantType].scrollContainer[scrollKey] + delta;
+            this.quadrantRefs[quadrantType].scrollContainer[scrollKey] = nextScrollPosition;
             quadrantTypesToSync.forEach((quadrantTypeToSync) => {
-                this.quadrantRefs[quadrantTypeToSync].scrollContainer[scrollKey] = nextScrollPosition; // TODO: FORCED_REFLOW (x)
+                this.quadrantRefs[quadrantTypeToSync].scrollContainer[scrollKey] = nextScrollPosition;
             });
         }
     }
@@ -651,7 +651,7 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
     // Resizing
 
     private adjustVerticalGuides(verticalGuides: number[], quadrantType: QuadrantType) {
-        const scrollAmount = this.quadrantRefs[quadrantType].scrollContainer.scrollLeft; // TODO: FORCED_REFLOW (x)
+        const scrollAmount = this.quadrantRefs[quadrantType].scrollContainer.scrollLeft;
         const rowHeaderWidth = this.getRowHeaderWidth(quadrantType);
 
         const adjustedVerticalGuides = verticalGuides != null
@@ -662,8 +662,8 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
     }
 
     private adjustHorizontalGuides(horizontalGuides: number[], quadrantType: QuadrantType) {
-        const scrollAmount = this.quadrantRefs[quadrantType].scrollContainer.scrollTop; // TODO: FORCED_REFLOW (x)
-        const columnHeaderHeight = this.quadrantRefs[quadrantType].columnHeader.clientHeight; // TODO: FORCED_REFLOW (x)
+        const scrollAmount = this.quadrantRefs[quadrantType].scrollContainer.scrollTop;
+        const columnHeaderHeight = this.quadrantRefs[quadrantType].columnHeader.clientHeight;
 
         const adjustedHorizontalGuides = horizontalGuides != null
             ? horizontalGuides.map((horizontalGuide) => horizontalGuide - scrollAmount + columnHeaderHeight)
@@ -676,6 +676,6 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
         // unlike the column header, the row header can be toggled, so we need to handle the case
         // when it's not showing
         const { rowHeader } = this.quadrantRefs[quadrantType];
-        return rowHeader == null ? 0 : rowHeader.clientWidth; // TODO: FORCED_REFLOW (x)
+        return rowHeader == null ? 0 : rowHeader.clientWidth;
     }
 }
