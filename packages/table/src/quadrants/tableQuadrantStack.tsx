@@ -383,13 +383,17 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
             this.wasMainQuadrantScrollChangedFromOtherOnWheelCallback = false;
             return;
         }
+
         const nextScrollTop = this.quadrantRefs[QuadrantType.MAIN].scrollContainer.scrollTop;
         const nextScrollLeft = this.quadrantRefs[QuadrantType.MAIN].scrollContainer.scrollLeft;
 
+        // invoke onScroll (which may read current scroll position) before
+        // changing the scroll offsets of other quadrants, because those changes
+        // force a reflow.
+        this.props.onScroll(event);
+
         this.quadrantRefs[QuadrantType.LEFT].scrollContainer.scrollTop = nextScrollTop;
         this.quadrantRefs[QuadrantType.TOP].scrollContainer.scrollLeft = nextScrollLeft;
-
-        this.props.onScroll(event);
     }
 
     // recall that we've already invoked event.preventDefault() when defining the throttled versions
@@ -397,9 +401,11 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
     // position too.
 
     private handleWheel = (event: React.WheelEvent<HTMLElement>) => {
+        // again, let the listener read the current scroll position before we force a reflow.
+        this.props.onScroll(event);
+
         this.handleDirectionalWheel("horizontal", event.deltaX, QuadrantType.MAIN, [QuadrantType.TOP]);
         this.handleDirectionalWheel("vertical", event.deltaY, QuadrantType.MAIN, [QuadrantType.LEFT]);
-        this.props.onScroll(event);
     }
 
     // Resizing
@@ -569,20 +575,22 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
         // assumes that the menu element width has already been sync'd after the last render
 
         const { rowHeader, columnHeader } = this.quadrantRefs[QuadrantType.MAIN];
-        const rowHeaderWidth = rowHeader == null ? 0 : rowHeader.getBoundingClientRect().width;
-        const columnHeaderHeight = columnHeader == null ? 0 : columnHeader.getBoundingClientRect().height;
+
+        // batched reads to prevent DOM thrashing:
+        const rowHeaderWidth = rowHeader == null ? 0 : rowHeader.getBoundingClientRect().width; // TODO: FORCED_REFLOW (x)
+        const columnHeaderHeight = columnHeader == null ? 0 : columnHeader.getBoundingClientRect().height; // TODO: FORCED_REFLOW (x)
+        const scrollbarWidth = mainQuadrantScrollElement.offsetWidth - mainQuadrantScrollElement.clientWidth; // TODO: FORCED_REFLOW (x)
+        const scrollbarHeight = mainQuadrantScrollElement.offsetHeight - mainQuadrantScrollElement.clientHeight; // TODO: FORCED_REFLOW (x)
 
         // no need to sync the main quadrant, because it fills the entire viewport
-        topQuadrantElement.style.height = `${topQuadrantGridContentHeight + columnHeaderHeight}px`;
-        leftQuadrantElement.style.width = `${leftQuadrantGridContentWidth + rowHeaderWidth}px`;
-        topLeftQuadrantElement.style.width = `${leftQuadrantGridContentWidth + rowHeaderWidth}px`;
-        topLeftQuadrantElement.style.height = `${topQuadrantGridContentHeight + columnHeaderHeight}px`;
+        topQuadrantElement.style.height = `${topQuadrantGridContentHeight + columnHeaderHeight}px`; // TODO: FORCED_REFLOW (x)
+        leftQuadrantElement.style.width = `${leftQuadrantGridContentWidth + rowHeaderWidth}px`; // TODO: FORCED_REFLOW (x)
+        topLeftQuadrantElement.style.width = `${leftQuadrantGridContentWidth + rowHeaderWidth}px`; // TODO: FORCED_REFLOW (x)
+        topLeftQuadrantElement.style.height = `${topQuadrantGridContentHeight + columnHeaderHeight}px`; // TODO: FORCED_REFLOW (x)
 
         // resize the top and left quadrants to keep the main quadrant's scrollbar visible
-        const scrollbarWidth = mainQuadrantScrollElement.offsetWidth - mainQuadrantScrollElement.clientWidth;
-        const scrollbarHeight = mainQuadrantScrollElement.offsetHeight - mainQuadrantScrollElement.clientHeight;
-        topQuadrantElement.style.right = `${scrollbarWidth}px`;
-        leftQuadrantElement.style.bottom = `${scrollbarHeight}px`;
+        topQuadrantElement.style.right = `${scrollbarWidth}px`; // TODO: FORCED_REFLOW (x)
+        leftQuadrantElement.style.bottom = `${scrollbarHeight}px`; // TODO: FORCED_REFLOW (x)
 
         // resize top and top-left quadrant row headers if main quadrant scrolls
         this.maybeSyncRowHeaderSize(topQuadrantRowHeaderElement, rowHeaderWidth);
@@ -596,7 +604,7 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
         const selector = `.${Classes.TABLE_ROW_HEADERS_CELLS_CONTAINER}`;
         // this child element dictates the width of all row-header cells
         const elementToResize = rowHeaderElement.querySelector(selector) as HTMLElement;
-        elementToResize.style.width = `${width}px`;
+        elementToResize.style.width = `${width}px`; // TODO: FORCED_REFLOW (x)
     }
 
     // Helpers
@@ -631,10 +639,11 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
             this.wasMainQuadrantScrollChangedFromOtherOnWheelCallback = true;
 
             // sync the corresponding scroll position of all dependent quadrants
-            const nextScrollPosition = this.quadrantRefs[quadrantType].scrollContainer[scrollKey] + delta;
-            this.quadrantRefs[quadrantType].scrollContainer[scrollKey] = nextScrollPosition;
+            // batch reads and writes to avoid DOM thrashing
+            const nextScrollPosition = this.quadrantRefs[quadrantType].scrollContainer[scrollKey] + delta; // TODO: FORCED_REFLOW (x)
+            this.quadrantRefs[quadrantType].scrollContainer[scrollKey] = nextScrollPosition; // TODO: FORCED_REFLOW (x)
             quadrantTypesToSync.forEach((quadrantTypeToSync) => {
-                this.quadrantRefs[quadrantTypeToSync].scrollContainer[scrollKey] = nextScrollPosition;
+                this.quadrantRefs[quadrantTypeToSync].scrollContainer[scrollKey] = nextScrollPosition; // TODO: FORCED_REFLOW (x)
             });
         }
     }
@@ -642,7 +651,7 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
     // Resizing
 
     private adjustVerticalGuides(verticalGuides: number[], quadrantType: QuadrantType) {
-        const scrollAmount = this.quadrantRefs[quadrantType].scrollContainer.scrollLeft;
+        const scrollAmount = this.quadrantRefs[quadrantType].scrollContainer.scrollLeft; // TODO: FORCED_REFLOW (x)
         const rowHeaderWidth = this.getRowHeaderWidth(quadrantType);
 
         const adjustedVerticalGuides = verticalGuides != null
@@ -653,8 +662,8 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
     }
 
     private adjustHorizontalGuides(horizontalGuides: number[], quadrantType: QuadrantType) {
-        const scrollAmount = this.quadrantRefs[quadrantType].scrollContainer.scrollTop;
-        const columnHeaderHeight = this.quadrantRefs[quadrantType].columnHeader.clientHeight;
+        const scrollAmount = this.quadrantRefs[quadrantType].scrollContainer.scrollTop; // TODO: FORCED_REFLOW (x)
+        const columnHeaderHeight = this.quadrantRefs[quadrantType].columnHeader.clientHeight; // TODO: FORCED_REFLOW (x)
 
         const adjustedHorizontalGuides = horizontalGuides != null
             ? horizontalGuides.map((horizontalGuide) => horizontalGuide - scrollAmount + columnHeaderHeight)
@@ -667,6 +676,6 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
         // unlike the column header, the row header can be toggled, so we need to handle the case
         // when it's not showing
         const { rowHeader } = this.quadrantRefs[quadrantType];
-        return rowHeader == null ? 0 : rowHeader.clientWidth;
+        return rowHeader == null ? 0 : rowHeader.clientWidth; // TODO: FORCED_REFLOW (x)
     }
 }
