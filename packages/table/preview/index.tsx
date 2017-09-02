@@ -94,6 +94,7 @@ interface IMutableTableState {
     showRowHeaders?: boolean;
     showRowHeadersLoading?: boolean;
     showZebraStriping?: boolean;
+    useTruncatedFormatFontString?: boolean;
 }
 
 const COLUMN_COUNTS = [
@@ -149,8 +150,8 @@ const ROW_COUNT_DEFAULT_INDEX = 4;
 const FROZEN_COLUMN_COUNT_DEFAULT_INDEX = 0;
 const FROZEN_ROW_COUNT_DEFAULT_INDEX = 0;
 
-const LONG_TEXT_MIN_LENGTH = 5;
-const LONG_TEXT_MAX_LENGTH = 40;
+const LONG_TEXT_MIN_LENGTH = 50;
+const LONG_TEXT_MAX_LENGTH = 400;
 const ALPHANUMERIC_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 const CELL_CONTENT_GENERATORS = {
@@ -164,6 +165,8 @@ const CELL_CONTENT_GENERATORS = {
         }).join("");
     },
 };
+
+const CELL_FONT_PROPERTIES_STRING = `normal normal normal normal 12px / 20px -apple-system, system-ui, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", Icons16, sans-serif`;
 
 class MutableTable extends React.Component<{}, IMutableTableState> {
     private store = new DenseGridMutableStore<string>();
@@ -183,7 +186,7 @@ class MutableTable extends React.Component<{}, IMutableTableState> {
             enableBatchRendering: true,
             enableCellEditing: false,
             enableCellSelection: true,
-            enableCellTruncation: false,
+            enableCellTruncation: true,
             enableColumnCustomHeaders: true,
             enableColumnNameEditing: false,
             enableColumnReordering: true,
@@ -215,6 +218,7 @@ class MutableTable extends React.Component<{}, IMutableTableState> {
             showRowHeaders: true,
             showRowHeadersLoading: false,
             showZebraStriping: false,
+            useTruncatedFormatFontString: false,
         };
     }
 
@@ -440,6 +444,7 @@ class MutableTable extends React.Component<{}, IMutableTableState> {
                 <Cell className={classes}>
                     <TruncatedFormat
                         detectTruncation={true}
+                        fontProperties={this.state.useTruncatedFormatFontString ?CELL_FONT_PROPERTIES_STRING : undefined}
                         preformatted={false}
                         showPopover={this.state.cellTruncatedPopoverMode}
                         truncateLength={80}
@@ -522,6 +527,7 @@ class MutableTable extends React.Component<{}, IMutableTableState> {
                 {cellContentMenu}
                 {this.renderSwitch("Loading state", "showCellsLoading")}
                 {this.renderSwitch("Custom regions", "showCustomRegions")}
+                {this.renderSwitch("Use font string", "useTruncatedFormatFontString")}
                 <h6>Interactions</h6>
                 {this.renderSwitch("Editing", "enableCellEditing")}
                 {this.renderSwitch("Selection", "enableCellSelection")}

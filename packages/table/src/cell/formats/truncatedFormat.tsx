@@ -11,6 +11,7 @@ import * as classNames from "classnames";
 import * as React from "react";
 
 import * as Classes from "../../common/classes";
+import { ICssFontProperties, Utils } from "../../common/utils";
 
 // amount in pixels that the content div width changes when truncated vs when
 // not truncated. Note: could be modified by styles
@@ -32,6 +33,14 @@ export interface ITruncatedFormatProps extends IProps {
      * @default true;
      */
     detectTruncation?: boolean;
+
+    /**
+     * The font styles with which the content is expected to be rendered. If
+     * provided, will obviate the need to access the DOM (forcing a reflow) when
+     * measuring content to determine if truncation is necessary. Thus,
+     * providing this can result in performance gains.
+     */
+    fontProperties?: string | ICssFontProperties;
 
     /**
      * Sets the popover content style to `white-space: pre` if `true` or
@@ -162,11 +171,45 @@ export class TruncatedFormat extends React.Component<ITruncatedFormatProps, ITru
         // where everything isn't pixel perfect
         popoverHandleAdjustmentFactor += .5;
 
-        const isTruncated = this.contentDiv !== undefined &&
-            (this.contentDiv.scrollWidth - popoverHandleAdjustmentFactor > this.contentDiv.clientWidth ||
-            this.contentDiv.scrollHeight > this.contentDiv.clientHeight);
+        const isTruncated = this.doesContentOverflowContainer();
         if (this.state.isTruncated !== isTruncated) {
             this.setState({ isTruncated });
+        }
+    }
+
+    private doesContentOverflowContainer() {
+        // return without accessing the DOM if possible
+        if (this.contentDiv === undefined) {
+            return false;
+        }
+
+        const { fontProperties } = this.props;
+        const { isTruncated } = this.state;
+
+        if (fontProperties != null) {
+            const { width } = Utils.measureElementTextContent(this.contentDiv, fontProperties);
+            return width > 150;
+        } else {
+
+            const {
+                clientHeight: containerHeight,
+                clientWidth: containerWidth,
+                scrollHeight: contentHeight,
+                scrollWidth: contentWidth,
+            } = this.contentDiv;
+
+            // if the popover handle exists, take it into account
+            let popoverHandleAdjustmentFactor = isTruncated ? CONTENT_DIV_WIDTH_DELTA : 0;
+
+            // add a slight bit of buffer space where we don't show the popover, to deal with cases
+            // where everything isn't pixel perfect
+            popoverHandleAdjustmentFactor += .5;
+
+            // this forces a reflow, degrading performance
+            return (
+                contentWidth - popoverHandleAdjustmentFactor > containerWidth
+                || contentHeight > containerHeight
+            );
         }
     }
 }

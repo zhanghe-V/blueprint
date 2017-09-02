@@ -22,20 +22,28 @@ export interface ClassDictionary {
 export interface ClassArray extends Array<ClassValue> {};
 // tslint:enable
 
+export interface IKeyWhitelist<T> { include: Array<keyof T>; }
+export interface IKeyBlacklist<T> { exclude: Array<keyof T>; }
+
+export interface ICssFontProperties {
+    "font-family"?: string;
+    "font-size"?: string;
+    "font-style"?: string;
+    "font-variant"?: string;
+    "font-weight"?: string;
+}
+
 /**
  * Since Firefox doesn't provide a computed "font" property, we manually
  * construct it using the ordered properties that can be specifed in CSS.
  */
-const CSS_FONT_PROPERTIES = [
+const CSS_FONT_PROPERTIES: Array<keyof ICssFontProperties> = [
     "font-style",
     "font-variant",
     "font-weight",
     "font-size",
     "font-family",
 ];
-
-export interface IKeyWhitelist<T> { include: Array<keyof T>; }
-export interface IKeyBlacklist<T> { exclude: Array<keyof T>; }
 
 export const Utils = {
     /**
@@ -190,10 +198,15 @@ export const Utils = {
      *
      * Returns a `TextMetrics` object.
      */
-    measureElementTextContent(element: Element) {
+    measureElementTextContent(element: Element, fontProperties?: string | ICssFontProperties) {
         const context = document.createElement("canvas").getContext("2d");
-        const style = getComputedStyle(element, null);
-        context.font = CSS_FONT_PROPERTIES.map((prop) => style.getPropertyValue(prop)).join(" ");
+        context.font = fontProperties != null
+            ? _getFontStyleShorthandString(fontProperties)
+            : _getFontStyleShorthandStringFromDom(element);
+
+        // accessing textContent does NOT force a reflow.
+        // see: "Differences from innerText" (3rd bullet) at
+        // https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent
         return context.measureText(element.textContent);
     },
 
@@ -469,7 +482,7 @@ function _isSimplePrimitiveType(value: any) {
 }
 
 function _filterKeys<T>(objA: T, objB: T, keys: IKeyBlacklist<T> | IKeyWhitelist<T>) {
-    if (isWhitelist(keys)) {
+    if (_isWhitelist(keys)) {
         return keys.include;
     } else {
         const keysA = Object.keys(objA);
@@ -486,7 +499,7 @@ function _filterKeys<T>(objA: T, objB: T, keys: IKeyBlacklist<T> | IKeyWhitelist
     }
 }
 
-function isWhitelist<T>(keys: any): keys is IKeyWhitelist<T> {
+function _isWhitelist<T>(keys: any): keys is IKeyWhitelist<T> {
     return keys != null && (keys as IKeyWhitelist<T>).include != null;
 }
 
@@ -520,4 +533,28 @@ function _unionKeys<T extends object>(objA: T, objB: T) {
     const keySet = _arrayToObject(concatKeys);
 
     return Object.keys(keySet) as Array<keyof T>;
+}
+
+/**
+ * Convert the provided font properties string or object into the equivalent CSS
+ * "font"-property shorthand string. Does not force a reflow, because the DOM is
+ * never accessed.
+ */
+function _getFontStyleShorthandString(fontProperties: string | ICssFontProperties) {
+    console.log("[Utils > _getFontStyleShorthandString] avoiding reflow!");
+    if (typeof fontProperties === "string") {
+        return fontProperties;
+    } else {
+        return CSS_FONT_PROPERTIES.map((prop) => fontProperties[prop]).join(" ");
+    }
+}
+
+/**
+ * Lookup the provided element's computed font styles in the DOM, forcing a
+ * reflow, and return the equivalent CSS "font"-property shorthand string.
+ */
+function _getFontStyleShorthandStringFromDom(element: Element) {
+    console.log("[Utils > _getFontStyleShorthandStringFromDom] REFLOW!");
+    const style = getComputedStyle(element);
+    return CSS_FONT_PROPERTIES.map((prop) => style.getPropertyValue(prop)).join(" ");
 }
