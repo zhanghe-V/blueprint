@@ -237,6 +237,7 @@ class MutableTable extends React.Component<{}, IMutableTableState> {
                     className={classNames("table", { "is-inline": this.state.showInline })}
                     enableFocus={this.state.showFocusCell}
                     fillBodyWithGhostCells={this.state.showGhostCells}
+                    getCellClipboardData={this.getCellValue}
                     isColumnResizable={this.state.enableColumnResizing}
                     isColumnReorderable={this.state.enableColumnReordering}
                     isRowHeaderShown={this.state.showRowHeaders}
@@ -421,6 +422,10 @@ class MutableTable extends React.Component<{}, IMutableTableState> {
             />
         </Menu>);
         // tslint:enable:jsx-no-multiline-js jsx-no-lambda
+    }
+
+    private getCellValue = (rowIndex: number, columnIndex: number) => {
+        return this.store.get(rowIndex, columnIndex);
     }
 
     private renderCell = (rowIndex: number, columnIndex: number) => {

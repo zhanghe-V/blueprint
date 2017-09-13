@@ -6,8 +6,8 @@
  */
 
 import { Icon, IProps, Popover, Position } from "@blueprintjs/core";
-
 import * as classNames from "classnames";
+import * as PureRender from "pure-render-decorator";
 import * as React from "react";
 
 import * as Classes from "../../common/classes";
@@ -15,6 +15,8 @@ import { ICssFontProperties, Utils } from "../../common/utils";
 
 // amount in pixels that the content div width changes when truncated vs when
 // not truncated. Note: could be modified by styles
+// Note 2: this doesn't come from the width of the popover element, but the "right" style
+// on the div, which comes from styles
 const CONTENT_DIV_WIDTH_DELTA = 25;
 
 export enum TruncatedPopoverMode {
@@ -41,6 +43,16 @@ export interface ITruncatedFormatProps extends IProps {
      * providing this can result in performance gains.
      */
     fontProperties?: string | ICssFontProperties;
+
+    /*
+     * Height of the parent cell. Used by shouldComponentUpdate only
+     */
+    parentCellHeight?: string;
+
+    /**
+     * Width of the parent cell. Used by shouldComponentUpdate only
+     */
+    parentCellWidth?: string;
 
     /**
      * Sets the popover content style to `white-space: pre` if `true` or
@@ -79,6 +91,7 @@ export interface ITruncatedFormatState {
     isTruncated: boolean;
 }
 
+@PureRender
 export class TruncatedFormat extends React.Component<ITruncatedFormatProps, ITruncatedFormatState> {
     public static defaultProps: ITruncatedFormatProps = {
         detectTruncation: true,
@@ -163,53 +176,45 @@ export class TruncatedFormat extends React.Component<ITruncatedFormatProps, ITru
     private setTruncationState() {
         if (!this.props.detectTruncation || this.props.showPopover !== TruncatedPopoverMode.WHEN_TRUNCATED) {
             return;
-        }
-
-        // if the popover handle exists, take it into account
-        let popoverHandleAdjustmentFactor = this.state.isTruncated ? CONTENT_DIV_WIDTH_DELTA : 0;
-        // add a slight bit of buffer space where we don't show the popover, to deal with cases
-        // where everything isn't pixel perfect
-        popoverHandleAdjustmentFactor += .5;
-
-        const isTruncated = this.doesContentOverflowContainer();
-        if (this.state.isTruncated !== isTruncated) {
-            this.setState({ isTruncated });
+        } else if (this.contentDiv === undefined) {
+            this.setState({ isTruncated: false });
+        } else {
+            this.setState({ isTruncated: this.shouldTruncate() });
         }
     }
 
-    private doesContentOverflowContainer() {
-        // return without accessing the DOM if possible
-        if (this.contentDiv === undefined) {
-            return false;
-        }
-
-        const { fontProperties } = this.props;
+    private shouldTruncate() {
+        const { fontProperties, parentCellWidth } = this.props;
         const { isTruncated } = this.state;
 
         if (fontProperties != null) {
             const { width } = Utils.measureElementTextContent(this.contentDiv, fontProperties);
-            return width > 150; // TODO: Use this.props.parentCellWidth once #1550 merges
+            return width > parseInt(parentCellWidth, 10);
         } else {
-
+            // take all measurements at once to avoid excessive DOM reflows.
             const {
                 clientHeight: containerHeight,
                 clientWidth: containerWidth,
-                scrollHeight: contentHeight,
+                scrollHeight: actualContentHeight,
                 scrollWidth: contentWidth,
             } = this.contentDiv;
 
-            // if the popover handle exists, take it into account
-            let popoverHandleAdjustmentFactor = isTruncated ? CONTENT_DIV_WIDTH_DELTA : 0;
+            // if the content is truncated, then a popover handle will be present as a
+            // sibling of the content. we don't want to consider that handle when
+            // calculating the width of the actual content, so subtract it.
+            const actualContentWidth = isTruncated
+                ? contentWidth - CONTENT_DIV_WIDTH_DELTA
+                : contentWidth;
 
-            // add a slight bit of buffer space where we don't show the popover, to deal with cases
-            // where everything isn't pixel perfect
-            popoverHandleAdjustmentFactor += .5;
+            // we of course truncate the content if it doesn't fit in the container. but we
+            // also aggressively truncate if they're the same size with truncation enabled;
+            // this addresses browser-crashing stack-overflow bugs at various zoom levels.
+            // (see: https://github.com/palantir/blueprint/pull/1519)
+            const shouldTruncate = (isTruncated && actualContentWidth === containerWidth)
+                || actualContentWidth > containerWidth
+                || actualContentHeight > containerHeight;
 
-            // this forces a reflow, degrading performance
-            return (
-                contentWidth - popoverHandleAdjustmentFactor > containerWidth
-                || contentHeight > containerHeight
-            );
+            return shouldTruncate;
         }
     }
 }
