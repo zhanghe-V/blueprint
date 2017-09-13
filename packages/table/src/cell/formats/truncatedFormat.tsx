@@ -104,6 +104,7 @@ export class TruncatedFormat extends React.Component<ITruncatedFormatProps, ITru
     public state: ITruncatedFormatState = { isTruncated: false };
 
     private contentDiv: HTMLDivElement;
+    private numericParentCellWidth: number;
 
     public render() {
         const { children, detectTruncation, preformatted, truncateLength, truncationSuffix } = this.props;
@@ -184,13 +185,15 @@ export class TruncatedFormat extends React.Component<ITruncatedFormatProps, ITru
     }
 
     private shouldTruncate() {
-        const { fontProperties, parentCellWidth } = this.props;
+        const { fontProperties } = this.props;
         const { isTruncated } = this.state;
 
         if (fontProperties != null) {
+            console.log("[TruncatedFormat.shouldTruncate] measuring w/ canvas element");
             const { width } = Utils.measureElementTextContent(this.contentDiv, fontProperties);
-            return width > parseInt(parentCellWidth, 10);
+            return width > this.getNumericParentCellWidth();
         } else {
+            console.log("[TruncatedFormat.shouldTruncate] MEASURING FROM DOM");
             // take all measurements at once to avoid excessive DOM reflows.
             const {
                 clientHeight: containerHeight,
@@ -216,5 +219,13 @@ export class TruncatedFormat extends React.Component<ITruncatedFormatProps, ITru
 
             return shouldTruncate;
         }
+    }
+
+    private getNumericParentCellWidth() {
+        // cache for small savings over tons of renders
+        if (this.numericParentCellWidth == null) {
+            this.numericParentCellWidth = parseInt(this.props.parentCellWidth, 10);
+        }
+        return this.numericParentCellWidth;
     }
 }
