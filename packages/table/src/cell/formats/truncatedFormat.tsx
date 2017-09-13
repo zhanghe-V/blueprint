@@ -188,7 +188,7 @@ export class TruncatedFormat extends React.Component<ITruncatedFormatProps, ITru
 
         if (fontProperties != null) {
             const { width } = Utils.measureElementTextContent(this.contentDiv, fontProperties);
-            return width > 150;
+            return width > 150; // TODO: Use this.props.parentCellWidth once #1550 merges
         } else {
 
             const {

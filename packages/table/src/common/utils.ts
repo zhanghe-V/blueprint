@@ -45,6 +45,9 @@ const CSS_FONT_PROPERTIES: Array<keyof ICssFontProperties> = [
     "font-family",
 ];
 
+const CANVAS_SINGLETON = document.createElement("canvas");
+const CANVAS_CONTEXT = CANVAS_SINGLETON.getContext("2d");
+
 export const Utils = {
     /**
      * Returns a clone of the ReactElement with a className that includes the
@@ -199,15 +202,14 @@ export const Utils = {
      * Returns a `TextMetrics` object.
      */
     measureElementTextContent(element: Element, fontProperties?: string | ICssFontProperties) {
-        const context = document.createElement("canvas").getContext("2d");
-        context.font = fontProperties != null
+        CANVAS_CONTEXT.font = fontProperties != null
             ? _getFontStyleShorthandString(fontProperties)
             : _getFontStyleShorthandStringFromDom(element);
 
         // accessing textContent does NOT force a reflow.
         // see: "Differences from innerText" (3rd bullet) at
         // https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent
-        return context.measureText(element.textContent);
+        return CANVAS_CONTEXT.measureText(element.textContent);
     },
 
     /**
