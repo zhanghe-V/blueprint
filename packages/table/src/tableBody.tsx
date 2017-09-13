@@ -247,6 +247,8 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
     // Render modes
     // ============
 
+    private batchRenderStartTime: any;
+
     private renderBatchedCells() {
         const {
             columnIndexEnd,
@@ -264,7 +266,13 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
         }
         this.batcher.removeOldAddNew(this.renderNewCell);
         if (!this.batcher.isDone()) {
+            if (this.batchRenderStartTime == null) {
+                this.batchRenderStartTime = new Date().getTime();
+            }
             this.batcher.idleCallback(() => this.forceUpdate());
+        } else {
+            console.log("BATCHING DONE in", new Date().getTime() - this.batchRenderStartTime, "ms");
+            this.batchRenderStartTime = undefined;
         }
 
         const cells: Array<React.ReactElement<any>> = this.batcher.getList();
