@@ -5,6 +5,6 @@
  * and https://github.com/palantir/blueprint/blob/master/PATENTS
  */
 
-import "./focusedCellUtilsTests";
-import "./overlayStyleUtilsTests";
-import "./scrollUtilsTests";
+describe("OverlayStyleUtils", () => {
+    /* TODO */
+});
