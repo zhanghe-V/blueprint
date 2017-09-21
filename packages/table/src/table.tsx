@@ -18,6 +18,7 @@ import { Clipboard } from "./common/clipboard";
 import * as Errors from "./common/errors";
 import { Grid, IColumnIndices, IRowIndices } from "./common/grid";
 import * as FocusedCellUtils from "./common/internal/focusedCellUtils";
+import * as OverlayStyleUtils from "./common/internal/overlayStyleUtils";
 import * as ScrollUtils from "./common/internal/scrollUtils";
 import { Rect } from "./common/rect";
 import { RenderMode } from "./common/renderMode";
@@ -1294,121 +1295,20 @@ export class Table extends AbstractComponent<ITableProps, ITableState> {
     }
 
     private styleBodyRegion = (region: IRegion, quadrantType: QuadrantType): React.CSSProperties => {
-        const { numFrozenColumns } = this.props;
-
-        const cardinality = Regions.getRegionCardinality(region);
-        const style = this.grid.getRegionStyle(region);
-
-        // ensure we're not showing borders at the boundary of the frozen-columns area
-        const canHideRightBorder =
-            (quadrantType === QuadrantType.TOP_LEFT || quadrantType === QuadrantType.LEFT) &&
-            numFrozenColumns != null &&
-            numFrozenColumns > 0;
-
-        const fixedHeight = this.grid.getHeight();
-        const fixedWidth = this.grid.getWidth();
-
-        // include a correction in some cases to hide borders along quadrant boundaries
-        const alignmentCorrection = 1;
-        const alignmentCorrectionString = `-${alignmentCorrection}px`;
-
-        switch (cardinality) {
-            case RegionCardinality.CELLS:
-                return style;
-            case RegionCardinality.FULL_COLUMNS:
-                style.top = alignmentCorrectionString;
-                style.height = fixedHeight + alignmentCorrection;
-                return style;
-            case RegionCardinality.FULL_ROWS:
-                style.left = alignmentCorrectionString;
-                style.width = fixedWidth + alignmentCorrection;
-                if (canHideRightBorder) {
-                    style.right = alignmentCorrectionString;
-                }
-                return style;
-            case RegionCardinality.FULL_TABLE:
-                style.left = alignmentCorrectionString;
-                style.top = alignmentCorrectionString;
-                style.width = fixedWidth + alignmentCorrection;
-                style.height = fixedHeight + alignmentCorrection;
-                if (canHideRightBorder) {
-                    style.right = alignmentCorrectionString;
-                }
-                return style;
-            default:
-                return { display: "none" };
-        }
+        const numFrozenColumns = this.getNumFrozenColumnsClamped();
+        return OverlayStyleUtils.getBodyOverlayStyle(region, this.grid, quadrantType, numFrozenColumns);
     };
 
     private styleMenuRegion = (region: IRegion): React.CSSProperties => {
-        const { grid } = this;
-        const { viewportRect } = this.state;
-        if (viewportRect == null) {
-            return {};
-        }
-        const cardinality = Regions.getRegionCardinality(region);
-        const style = grid.getRegionStyle(region);
-
-        switch (cardinality) {
-            case RegionCardinality.FULL_TABLE:
-                style.right = "0px";
-                style.bottom = "0px";
-                style.top = "0px";
-                style.left = "0px";
-                style.borderBottom = "none";
-                style.borderRight = "none";
-                return style;
-
-            default:
-                return { display: "none" };
-        }
+        return OverlayStyleUtils.getMenuOverlayStyle(region, this.grid, this.state.viewportRect);
     };
 
     private styleColumnHeaderRegion = (region: IRegion): React.CSSProperties => {
-        const { grid } = this;
-        const { viewportRect } = this.state;
-        if (viewportRect == null) {
-            return {};
-        }
-        const cardinality = Regions.getRegionCardinality(region);
-        const style = grid.getRegionStyle(region);
-
-        switch (cardinality) {
-            case RegionCardinality.FULL_TABLE:
-                style.left = "-1px";
-                style.borderLeft = "none";
-                style.bottom = "-1px";
-                return style;
-            case RegionCardinality.FULL_COLUMNS:
-                style.bottom = "-1px";
-                return style;
-
-            default:
-                return { display: "none" };
-        }
+        return OverlayStyleUtils.getColumnHeaderOverlayStyle(region, this.grid, this.state.viewportRect);
     };
 
     private styleRowHeaderRegion = (region: IRegion): React.CSSProperties => {
-        const { grid } = this;
-        const { viewportRect } = this.state;
-        if (viewportRect == null) {
-            return {};
-        }
-        const cardinality = Regions.getRegionCardinality(region);
-        const style = grid.getRegionStyle(region);
-        switch (cardinality) {
-            case RegionCardinality.FULL_TABLE:
-                style.top = "-1px";
-                style.borderTop = "none";
-                style.right = "-1px";
-                return style;
-            case RegionCardinality.FULL_ROWS:
-                style.right = "-1px";
-                return style;
-
-            default:
-                return { display: "none" };
-        }
+        return OverlayStyleUtils.getRowHeaderOverlayStyle(region, this.grid, this.state.viewportRect);
     };
 
     private handleColumnWidthChanged = (columnIndex: number, width: number) => {
