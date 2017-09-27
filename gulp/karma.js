@@ -18,7 +18,7 @@ module.exports = (blueprint, gulp, plugins) => {
 
         gulp.task(`karma-unit-${project.id}`, (done) => {
             const config = Object.assign(createConfig(project), {
-                browsers: ["Chrome"],
+                browsers: ["PhantomJS"],
                 client: {
                     mocha: {
                         reporter: "html",

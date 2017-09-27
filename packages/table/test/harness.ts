@@ -7,6 +7,7 @@
 
 // tslint:disable max-classes-per-file
 
+// tslint:disable-next-line:no-submodule-imports
 import { Browser } from "@blueprintjs/core/dist/compatibility";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -20,6 +21,12 @@ export interface IHarnessMouseOptions {
 
     /** @default 0 */
     offsetY?: number;
+
+    /** @default false */
+    altKey?: boolean;
+
+    /** @default false */
+    ctrlKey?: boolean;
 
     /** @default false */
     metaKey?: boolean;
@@ -116,10 +123,14 @@ export class ElementHarness {
         button: number = 0,
     ) {
         let offsetX: number;
+        let isAltKeyDown: boolean;
+        let isCtrlKeyDown: boolean;
 
         if (typeof offsetXOrOptions === "object") {
             offsetX = this.defaultValue(offsetXOrOptions.offsetX, 0);
             offsetY = this.defaultValue(offsetXOrOptions.offsetY, 0);
+            isAltKeyDown = this.defaultValue(offsetXOrOptions.altKey, false);
+            isCtrlKeyDown = this.defaultValue(offsetXOrOptions.ctrlKey, false);
             isMetaKeyDown = this.defaultValue(offsetXOrOptions.metaKey, false);
             isShiftKeyDown = this.defaultValue(offsetXOrOptions.shiftKey, false);
             button = this.defaultValue(offsetXOrOptions.button, 0);
@@ -149,8 +160,8 @@ export class ElementHarness {
             0,
             x,
             y,
-            isMetaKeyDown,
-            false,
+            isCtrlKeyDown,
+            isAltKeyDown,
             isShiftKeyDown,
             isMetaKeyDown,
             button,
