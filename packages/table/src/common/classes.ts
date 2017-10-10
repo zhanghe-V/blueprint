@@ -15,6 +15,7 @@ export const TABLE_CELL_GHOST = "bp-table-cell-ghost";
 export const TABLE_CELL_INTERACTIVE = "bp-table-cell-interactive";
 export const TABLE_CELL_LEDGER_EVEN = "bp-table-cell-ledger-even";
 export const TABLE_CELL_LEDGER_ODD = "bp-table-cell-ledger-odd";
+export const TABLE_CELL_FREEZE_BORDER = "bp-table-cell-freeze-border";
 export const TABLE_COLUMN_HEADER_TR = "bp-table-column-header-tr";
 export const TABLE_COLUMN_HEADERS = "bp-table-column-headers";
 export const TABLE_COLUMN_HEADER_CELL = "bp-table-column-header-cell";

@@ -14,6 +14,7 @@ import { IClientCoordinates } from "../interactions/draggable";
 import { IIndexedResizeCallback } from "../interactions/resizable";
 import { Orientation } from "../interactions/resizeHandle";
 import { RegionCardinality, Regions } from "../regions";
+import { ITableFreezeBorderStyles } from "../tableBodyCells";
 import { Header, IHeaderProps } from "./header";
 import { IRowHeaderCellProps, RowHeaderCell } from "./rowHeaderCell";
 
@@ -38,12 +39,14 @@ export interface IRowHeaderProps extends IHeaderProps, IRowHeights, IRowIndices 
 }
 
 export class RowHeader extends React.Component<IRowHeaderProps, {}> {
-    public defaultProps = {
+    public static defaultProps = {
         renderRowHeader: renderDefaultRowHeader,
     };
 
     public render() {
         const {
+            freezeBorderStyles,
+
             // from IRowHeaderProps
             onRowHeightChanged,
             renderRowHeader: renderHeaderCell,
@@ -65,6 +68,7 @@ export class RowHeader extends React.Component<IRowHeaderProps, {}> {
             <Header
                 convertPointToIndex={this.convertPointToRow}
                 fullRegionCardinality={RegionCardinality.FULL_ROWS}
+                freezeBorderStyles={freezeBorderStyles}
                 getCellExtremaClasses={this.getCellExtremaClasses}
                 getCellIndexClass={Classes.rowCellIndexClass}
                 getCellSize={this.getRowHeight}
@@ -121,8 +125,12 @@ export class RowHeader extends React.Component<IRowHeaderProps, {}> {
         return locator != null ? locator.convertPointToRow(clientXOrY, useMidpoint) : null;
     };
 
-    private getCellExtremaClasses = (index: number, indexEnd: number) => {
-        return this.props.grid.getExtremaClasses(index, 0, indexEnd, 1);
+    private getCellExtremaClasses = (
+        index: number,
+        indexEnd: number,
+        freezeBorderStyles: ITableFreezeBorderStyles[],
+    ) => {
+        return this.props.grid.getExtremaClasses(index, 0, indexEnd, 1, freezeBorderStyles);
     };
 
     private getRowHeight = (index: number) => {

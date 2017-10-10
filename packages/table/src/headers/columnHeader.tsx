@@ -15,6 +15,7 @@ import { IClientCoordinates } from "../interactions/draggable";
 import { IIndexedResizeCallback } from "../interactions/resizable";
 import { Orientation } from "../interactions/resizeHandle";
 import { RegionCardinality, Regions } from "../regions";
+import { ITableFreezeBorderStyles } from "../tableBodyCells";
 import { ColumnHeaderCell, IColumnHeaderCellProps } from "./columnHeaderCell";
 import { Header, IHeaderProps } from "./header";
 
@@ -136,8 +137,12 @@ export class ColumnHeader extends React.Component<IColumnHeaderProps, {}> {
         return locator != null ? locator.convertPointToColumn(clientXOrY, useMidpoint) : null;
     };
 
-    private getCellExtremaClasses = (index: number, indexEnd: number) => {
-        return this.props.grid.getExtremaClasses(0, index, 1, indexEnd);
+    private getCellExtremaClasses = (
+        index: number,
+        indexEnd: number,
+        freezeBorderStyles: ITableFreezeBorderStyles[],
+    ) => {
+        return this.props.grid.getExtremaClasses(0, index, 1, indexEnd, freezeBorderStyles);
     };
 
     private getColumnWidth = (index: number) => {

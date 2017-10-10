@@ -36,6 +36,14 @@ export enum QuadrantType {
     TOP_LEFT,
 }
 
+export enum QuadrantBorderType {
+    /** Show a blue border on the right of the quadrant. */
+    RIGHT,
+
+    /** Show a blue border on the bottom of the quadrant. */
+    BOTTOM,
+}
+
 export interface ITableQuadrantProps extends IProps {
     /**
      * A callback that receives a `ref` to the quadrant's body-wrapping element. Will need to be
@@ -103,6 +111,11 @@ export interface ITableQuadrantProps extends IProps {
         showFrozenRowsOnly?: boolean,
         showFrozenColumnsOnly?: boolean,
     ) => JSX.Element;
+
+    /**
+     * An optional list of borders styles that the quadrant should display.
+     */
+    quadrantBorderTypes?: QuadrantBorderType[];
 
     /**
      * A callback that receives a `ref` to the quadrant's scroll-container element.

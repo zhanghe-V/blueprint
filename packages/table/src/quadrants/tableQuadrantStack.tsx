@@ -13,7 +13,7 @@ import { Grid } from "../common/grid";
 import * as ScrollUtils from "../common/internal/scrollUtils";
 import { Utils } from "../common/utils";
 import { TableLoadingOption } from "../regions";
-import { QuadrantType, TableQuadrant } from "./tableQuadrant";
+import { QuadrantBorderType, QuadrantType, TableQuadrant } from "./tableQuadrant";
 import { TableQuadrantStackCache } from "./tableQuadrantStackCache";
 
 interface IQuadrantRefMap<T> {
@@ -366,6 +366,7 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
         const maybeLeftQuadrant = shouldRenderLeftQuadrants ? (
             <TableQuadrant
                 {...baseProps}
+                quadrantBorderTypes={this.showBorder(QuadrantType.LEFT)}
                 quadrantRef={this.quadrantRefHandlers[QuadrantType.LEFT].quadrant}
                 quadrantType={QuadrantType.LEFT}
                 renderColumnHeader={this.renderLeftQuadrantColumnHeader}
@@ -379,6 +380,7 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
         const maybeTopLeftQuadrant = shouldRenderLeftQuadrants ? (
             <TableQuadrant
                 {...baseProps}
+                quadrantBorderTypes={this.showBorder(QuadrantType.TOP_LEFT)}
                 quadrantRef={this.quadrantRefHandlers[QuadrantType.TOP_LEFT].quadrant}
                 quadrantType={QuadrantType.TOP_LEFT}
                 renderColumnHeader={this.renderTopLeftQuadrantColumnHeader}
@@ -405,6 +407,7 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
                 />
                 <TableQuadrant
                     {...baseProps}
+                    quadrantBorderTypes={this.showBorder(QuadrantType.TOP)}
                     quadrantRef={this.quadrantRefHandlers[QuadrantType.TOP].quadrant}
                     quadrantType={QuadrantType.TOP}
                     renderColumnHeader={this.renderTopQuadrantColumnHeader}
@@ -431,6 +434,22 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
 
     // Quadrant-specific renderers
     // ===========================
+
+    private showBorder = (quadrantType: QuadrantType): QuadrantBorderType[] => {
+        const { numFrozenColumns, numFrozenRows } = this.props;
+        switch (quadrantType) {
+            case QuadrantType.TOP:
+                return numFrozenRows > 0 ? [QuadrantBorderType.BOTTOM] : undefined;
+            case QuadrantType.LEFT:
+                return numFrozenColumns > 0 ? [QuadrantBorderType.RIGHT] : undefined;
+            case QuadrantType.TOP_LEFT:
+                return numFrozenColumns > 0 && numFrozenRows > 0
+                    ? [QuadrantBorderType.RIGHT, QuadrantBorderType.BOTTOM]
+                    : undefined;
+            default:
+                return undefined;
+        }
+    };
 
     // Menu
 
@@ -944,8 +963,8 @@ export class TableQuadrantStack extends AbstractComponent<ITableQuadrantStackPro
         return mainColumnHeader == null ? 0 : mainColumnHeader.clientHeight;
     }
 
-    private shouldRenderLeftQuadrants(props: ITableQuadrantStackProps = this.props) {
-        const { isRowHeaderShown, numFrozenColumns } = props;
+    private shouldRenderLeftQuadrants() {
+        const { isRowHeaderShown, numFrozenColumns } = this.props;
         return isRowHeaderShown || (numFrozenColumns != null && numFrozenColumns > 0);
     }
 

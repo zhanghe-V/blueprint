@@ -19,6 +19,7 @@ import { ILockableLayout, Orientation } from "../interactions/resizeHandle";
 import { DragSelectable, ISelectableProps } from "../interactions/selectable";
 import { ILocator } from "../locator";
 import { IRegion, RegionCardinality, Regions } from "../regions";
+import { ITableFreezeBorderStyles } from "../tableBodyCells";
 import { IHeaderCellProps } from "./headerCell";
 
 export type IHeaderCellRenderer = (index: number) => React.ReactElement<IHeaderCellProps>;
@@ -28,6 +29,12 @@ export interface IHeaderProps extends ILockableLayout, IReorderableProps, ISelec
      * The currently focused cell.
      */
     focusedCell?: IFocusedCellCoordinates;
+
+    /**
+     * If true, show a blue border indicating that the row or column represented by this header cell
+     * has been frozen.
+     */
+    freezeBorderStyles: ITableFreezeBorderStyles[];
 
     /**
      * The grid computes sizes of cells, rows, or columns from the
@@ -135,7 +142,11 @@ export interface IInternalHeaderProps extends IHeaderProps {
     /**
      * Provides any extrema classes for the provided index range in the table grid.
      */
-    getCellExtremaClasses: (index: number, indexEnd: number) => string[];
+    getCellExtremaClasses: (
+        index: number,
+        indexEnd: number,
+        freezeBorderStyles: ITableFreezeBorderStyles[],
+    ) => string[];
 
     /**
      * Provides the index class for the cell. Should be Classes.columnCellIndexClass for column
@@ -290,8 +301,9 @@ export class Header extends React.Component<IInternalHeaderProps, IHeaderState> 
     };
 
     private renderNewCell = (index: number) => {
-        const extremaClasses = this.props.getCellExtremaClasses(index, this.props.indexEnd);
-        const renderer = this.props.isGhostIndex(index) ? this.props.renderGhostCell : this.renderCell;
+        const { indexEnd, renderGhostCell, freezeBorderStyles } = this.props;
+        const extremaClasses = this.props.getCellExtremaClasses(index, indexEnd, freezeBorderStyles);
+        const renderer = this.props.isGhostIndex(index) ? renderGhostCell : this.renderCell;
         return renderer(index, extremaClasses);
     };
 

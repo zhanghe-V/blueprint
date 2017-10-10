@@ -96,6 +96,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
                     <TableBodyCells
                         cellRenderer={this.props.cellRenderer}
                         grid={grid}
+                        freezeBorderStyles={this.props.freezeBorderStyles}
                         loading={this.props.loading}
                         onCompleteRender={this.props.onCompleteRender}
                         renderMode={this.props.renderMode}

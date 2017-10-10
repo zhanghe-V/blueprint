@@ -17,11 +17,19 @@ import { Rect } from "./common/rect";
 import { RenderMode } from "./common/renderMode";
 import { Utils } from "./common/utils";
 
+export type ITableFreezeBorderStyles = "bottom" | "right";
+export const ITableFreezeBorderStyles = {
+    BOTTOM: "bottom" as "bottom",
+    RIGHT: "right" as "right",
+};
+
 export interface ITableBodyCellsProps extends IRowIndices, IColumnIndices, IProps {
     /**
      * A cell renderer for the cells in the body.
      */
     cellRenderer: ICellRenderer;
+
+    freezeBorderStyles: ITableFreezeBorderStyles[];
 
     /**
      * The grid computes sizes of cells, rows, or columns from the
@@ -139,13 +147,19 @@ export class TableBodyCells extends React.Component<ITableBodyCellsProps, {}> {
     }
 
     private renderAllCells() {
-        const { columnIndexEnd, columnIndexStart, grid, rowIndexEnd, rowIndexStart } = this.props;
+        const { columnIndexEnd, columnIndexStart, freezeBorderStyles, grid, rowIndexEnd, rowIndexStart } = this.props;
 
         const cells: Array<React.ReactElement<any>> = [];
 
         for (let rowIndex = rowIndexStart; rowIndex <= rowIndexEnd; rowIndex++) {
             for (let columnIndex = columnIndexStart; columnIndex <= columnIndexEnd; columnIndex++) {
-                const extremaClasses = grid.getExtremaClasses(rowIndex, columnIndex, rowIndexEnd, columnIndexEnd);
+                const extremaClasses = grid.getExtremaClasses(
+                    rowIndex,
+                    columnIndex,
+                    rowIndexEnd,
+                    columnIndexEnd,
+                    freezeBorderStyles,
+                );
                 const isGhost = grid.isGhostIndex(rowIndex, columnIndex);
                 cells.push(this.renderCell(rowIndex, columnIndex, extremaClasses, isGhost));
             }
@@ -158,8 +172,8 @@ export class TableBodyCells extends React.Component<ITableBodyCellsProps, {}> {
     // ==============
 
     private renderNewCell = (row: number, col: number) => {
-        const { columnIndexEnd, grid, rowIndexEnd } = this.props;
-        const extremaClasses = grid.getExtremaClasses(row, col, rowIndexEnd, columnIndexEnd);
+        const { columnIndexEnd, freezeBorderStyles, grid, rowIndexEnd } = this.props;
+        const extremaClasses = grid.getExtremaClasses(row, col, rowIndexEnd, columnIndexEnd, freezeBorderStyles);
         const isGhost = grid.isGhostIndex(row, col);
         return this.renderCell(row, col, extremaClasses, isGhost);
     };

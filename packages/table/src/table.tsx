@@ -43,6 +43,7 @@ import {
     TableLoadingOption,
 } from "./regions";
 import { TableBody } from "./tableBody";
+import { ITableFreezeBorderStyles } from "./tableBodyCells";
 
 export interface ITableProps extends IProps, IRowHeights, IColumnWidths {
     /**
@@ -1009,6 +1010,7 @@ export class Table extends AbstractComponent<ITableProps, ITableState> {
             loadingOptions,
             maxColumnWidth,
             minColumnWidth,
+            numFrozenColumns,
             selectedRegionTransform,
         } = this.props;
 
@@ -1019,6 +1021,10 @@ export class Table extends AbstractComponent<ITableProps, ITableState> {
         const columnIndices = this.grid.getColumnIndicesInRect(viewportRect, fillBodyWithGhostCells);
         const columnIndexStart = showFrozenColumnsOnly ? 0 : columnIndices.columnIndexStart;
         const columnIndexEnd = showFrozenColumnsOnly ? this.getMaxFrozenColumnIndex() : columnIndices.columnIndexEnd;
+        const freezeBorderStyles: ITableFreezeBorderStyles[] = [];
+        if (showFrozenColumnsOnly && numFrozenColumns > 0) {
+            freezeBorderStyles.push(ITableFreezeBorderStyles.RIGHT);
+        }
 
         return (
             <div className={classes}>
@@ -1026,6 +1032,7 @@ export class Table extends AbstractComponent<ITableProps, ITableState> {
                     allowMultipleSelection={allowMultipleSelection}
                     cellRenderer={this.columnHeaderCellRenderer}
                     focusedCell={focusedCell}
+                    freezeBorderStyles={freezeBorderStyles}
                     grid={this.grid}
                     isReorderable={isColumnReorderable}
                     isResizable={isColumnResizable}
@@ -1069,6 +1076,7 @@ export class Table extends AbstractComponent<ITableProps, ITableState> {
             loadingOptions,
             maxRowHeight,
             minRowHeight,
+            numFrozenRows,
             renderRowHeader,
             selectedRegionTransform,
         } = this.props;
@@ -1080,6 +1088,10 @@ export class Table extends AbstractComponent<ITableProps, ITableState> {
         const rowIndices = this.grid.getRowIndicesInRect(viewportRect, fillBodyWithGhostCells);
         const rowIndexStart = showFrozenRowsOnly ? 0 : rowIndices.rowIndexStart;
         const rowIndexEnd = showFrozenRowsOnly ? this.getMaxFrozenRowIndex() : rowIndices.rowIndexEnd;
+        const freezeBorderStyles: ITableFreezeBorderStyles[] = [];
+        if (showFrozenRowsOnly && numFrozenRows > 0) {
+            freezeBorderStyles.push(ITableFreezeBorderStyles.BOTTOM);
+        }
 
         return (
             <div className={classes} ref={refHandler}>
@@ -1087,6 +1099,7 @@ export class Table extends AbstractComponent<ITableProps, ITableState> {
                     allowMultipleSelection={allowMultipleSelection}
                     focusedCell={focusedCell}
                     grid={this.grid}
+                    freezeBorderStyles={freezeBorderStyles}
                     locator={this.locator}
                     isReorderable={isRowReorderable}
                     isResizable={isRowResizable}
@@ -1157,12 +1170,20 @@ export class Table extends AbstractComponent<ITableProps, ITableState> {
         const columnIndices = this.grid.getColumnIndicesInRect(viewportRect, fillBodyWithGhostCells);
 
         const columnIndexStart = showFrozenColumnsOnly ? 0 : columnIndices.columnIndexStart;
-        const columnIndexEnd = showFrozenColumnsOnly ? numFrozenColumns : columnIndices.columnIndexEnd;
+        const columnIndexEnd = showFrozenColumnsOnly ? numFrozenColumns - 1 : columnIndices.columnIndexEnd;
         const rowIndexStart = showFrozenRowsOnly ? 0 : rowIndices.rowIndexStart;
-        const rowIndexEnd = showFrozenRowsOnly ? numFrozenRows : rowIndices.rowIndexEnd;
+        const rowIndexEnd = showFrozenRowsOnly ? numFrozenRows - 1 : rowIndices.rowIndexEnd;
 
         // the main quadrant contains all cells in the table, so listen only to that quadrant
         const onCompleteRender = quadrantType === QuadrantType.MAIN ? this.handleCompleteRender : undefined;
+
+        const freezeBorderStyles: ITableFreezeBorderStyles[] = [];
+        if (numFrozenColumns > 0) {
+            freezeBorderStyles.push(ITableFreezeBorderStyles.RIGHT);
+        }
+        if (numFrozenRows > 0) {
+            freezeBorderStyles.push(ITableFreezeBorderStyles.BOTTOM);
+        }
 
         return (
             <div>
@@ -1170,6 +1191,7 @@ export class Table extends AbstractComponent<ITableProps, ITableState> {
                     allowMultipleSelection={allowMultipleSelection}
                     cellRenderer={this.bodyCellRenderer}
                     focusedCell={focusedCell}
+                    freezeBorderStyles={freezeBorderStyles}
                     grid={this.grid}
                     loading={this.hasLoadingOption(loadingOptions, TableLoadingOption.CELLS)}
                     locator={this.locator}

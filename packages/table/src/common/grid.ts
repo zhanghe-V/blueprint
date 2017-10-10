@@ -8,6 +8,7 @@
 import { CSSProperties } from "react";
 
 import { IRegion, RegionCardinality, Regions } from "../regions";
+import { ITableFreezeBorderStyles } from "../tableBodyCells";
 import * as Classes from "./classes";
 import { Rect } from "./rect";
 import { Utils } from "./utils";
@@ -281,17 +282,27 @@ export class Grid {
         return rowIndex >= this.numRows || columnIndex >= this.numCols;
     }
 
-    public getExtremaClasses(rowIndex: number, columnIndex: number, rowEnd: number, columnEnd: number) {
-        if (rowIndex === rowEnd && columnIndex === columnEnd) {
-            return [Classes.TABLE_LAST_IN_COLUMN, Classes.TABLE_LAST_IN_ROW];
-        }
+    public getExtremaClasses(
+        rowIndex: number,
+        columnIndex: number,
+        rowEnd: number,
+        columnEnd: number,
+        freezeBorderStyles: ITableFreezeBorderStyles[],
+    ) {
+        const classes: string[] = [];
         if (rowIndex === rowEnd) {
-            return [Classes.TABLE_LAST_IN_COLUMN];
+            classes.push(Classes.TABLE_LAST_IN_COLUMN);
+            if (freezeBorderStyles.indexOf(ITableFreezeBorderStyles.BOTTOM) >= 0) {
+                classes.push(Classes.TABLE_CELL_FREEZE_BORDER);
+            }
         }
         if (columnIndex === columnEnd) {
-            return [Classes.TABLE_LAST_IN_ROW];
+            classes.push(Classes.TABLE_LAST_IN_ROW);
+            if (freezeBorderStyles.indexOf(ITableFreezeBorderStyles.RIGHT) >= 0) {
+                classes.push(Classes.TABLE_CELL_FREEZE_BORDER);
+            }
         }
-        return [];
+        return Array.from(new Set<string>(classes));
     }
 
     public getRegionStyle(region: IRegion): CSSProperties {
