@@ -42,12 +42,12 @@ Make sure to review the [general usage docs for JS components](#blueprint.usage)
 
 This component is a simple wrapper around the CSS API, and supports the full range of HTML props.
 
-```
-<ButtonGroup minimal={true} large={false} onMouseEnter={...}>
-    <Button>Queries</Button>
-    <Button>Functions</Button>
-    <AnchorButton>Options</AnchorButton>
-</div>
+```tsx
+<ButtonGroup minimal={true} large={false}>
+    <Button iconName="database">Queries</Button>
+    <Button iconName="function">Functions</Button>
+    <AnchorButton rightIconName="caret-down">Options</AnchorButton>
+</ButtonGroup>
 ```
 
 @reactExample ButtonGroupExample
