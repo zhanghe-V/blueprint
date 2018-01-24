@@ -219,10 +219,14 @@ export abstract class CoreSlider<P extends ICoreSliderProps> extends AbstractPur
     }
 
     private updateTickSize() {
-        if (this.trackElement != null) {
-            const trackSize = this.props.vertical ? this.trackElement.clientHeight : this.trackElement.clientWidth;
-            const tickSize = trackSize / ((this.props.max as number) - (this.props.min as number));
-            this.setState({ tickSize });
-        }
+        // wait for repaint so `trackElement` has correct dimensions before measuring.
+        // this typically causes a double render on mount and single renders after that (unless dimensions change).
+        requestAnimationFrame(() => {
+            if (this.trackElement != null) {
+                const trackSize = this.props.vertical ? this.trackElement.clientHeight : this.trackElement.clientWidth;
+                const tickSize = trackSize / ((this.props.max as number) - (this.props.min as number));
+                this.setState({ tickSize });
+            }
+        });
     }
 }
