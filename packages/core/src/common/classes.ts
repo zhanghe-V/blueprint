@@ -205,7 +205,7 @@ export function iconClass(iconName?: string) {
     return iconName.indexOf("pt-icon-") === 0 ? iconName : `pt-icon-${iconName}`;
 }
 
-export function intentClass(intent = Intent.NONE) {
+export function intentClass(intent: Intent = Intent.NONE) {
     if (intent == null || intent === Intent.NONE) {
         return undefined;
     }

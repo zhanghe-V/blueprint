@@ -164,8 +164,9 @@ export interface IPopoverProps extends IOverlayableProps, IProps {
      * The default value of `"auto"` will choose the best position when opened
      * and will allow the popover to reposition itself to remain onscreen as the
      * user scrolls around.
+     * @default "auto"
      */
-    position?: Position | "auto";
+    position?: Position;
 
     /**
      * The name of the HTML tag to use when rendering the popover target wrapper element (`.pt-popover-target`).

@@ -26,6 +26,10 @@ function buttonTestSuite(component: React.ComponentClass<any>, tagName: string) 
             assert.isTrue(wrapper.hasClass("foo"));
         });
 
+        it("supports string literal intent", () => {
+            assert.isTrue(button({ intent: "primary" }).hasClass(Classes.INTENT_PRIMARY));
+        });
+
         it('iconName="style" renders Icon as first child', () => {
             const wrapper = button({ iconName: "style" });
             const firstChild = wrapper.children().childAt(0);

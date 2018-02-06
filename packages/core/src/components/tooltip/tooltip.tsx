@@ -93,7 +93,7 @@ export interface ITooltipProps extends IProps, IIntentProps {
      * user scrolls around.
      * @default "auto"
      */
-    position?: Position | "auto";
+    position?: Position;
 
     /**
      * The name of the HTML tag to use when rendering the popover target wrapper element (`.pt-popover-target`).

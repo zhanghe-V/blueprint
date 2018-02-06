@@ -7,10 +7,11 @@
 /**
  * The four basic intents.
  */
-export enum Intent {
-    NONE = "none",
-    PRIMARY = "primary",
-    SUCCESS = "success",
-    WARNING = "warning",
-    DANGER = "danger",
-}
+export type Intent = "none" | "primary" | "success" | "warning" | "danger";
+export const Intent = {
+    DANGER: "danger" as "danger",
+    NONE: "none" as "none",
+    PRIMARY: "primary" as "primary",
+    SUCCESS: "success" as "success",
+    WARNING: "warning" as "warning",
+};
