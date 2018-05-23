@@ -9,52 +9,70 @@ import * as React from "react";
 
 import { Classes, Intent } from "../../common";
 import { intentClass } from "../../common/classes";
-import * as Errors from "../../common/errors";
 import * as Utils from "../../common/utils";
 import { CoreSlider, formatPercentage, ICoreSliderProps } from "./coreSlider";
 import { Handle } from "./handle";
-import { ISliderHandleProps, SliderHandle, SliderHandleType } from "./sliderHandle";
 
-export interface IMultiRangeSliderProps extends ICoreSliderProps {
-    children?: Array<React.ReactElement<ISliderHandleProps>>;
-    defaultTrackIntent?: Intent;
-    onChange?(values: number[]): void;
-    onRelease?(values: number[]): void;
+export interface ISliderValues {
+    [key: string]: number;
 }
 
-export class MultiRangeSlider extends CoreSlider<IMultiRangeSliderProps> {
-    public static defaultProps: IMultiRangeSliderProps = {
+export const SliderHandleType = {
+    FULL: "full" as "full",
+    START: "start" as "start",
+    // tslint:disable-next-line:object-literal-sort-keys
+    END: "end" as "end",
+};
+
+export type SliderHandleType = typeof SliderHandleType[keyof typeof SliderHandleType];
+
+export interface ISliderHandleProps {
+    trackIntentAfter?: Intent;
+    trackIntentBefore?: Intent;
+    type?: SliderHandleType;
+}
+
+interface ISliderHandleValueProps extends ISliderHandleProps {
+    value: number;
+}
+
+interface IKeyedSliderHandleValueProps<V extends ISliderValues> extends ISliderHandleValueProps {
+    key: keyof V;
+}
+
+export interface IMultiRangeSliderProps<V extends ISliderValues> extends ICoreSliderProps {
+    values?: V;
+    defaultTrackIntent?: Intent;
+    getHandleProps?(key: keyof V): ISliderHandleProps;
+    onChange?(values: V): void;
+    onRelease?(values: V): void;
+}
+
+export class MultiRangeSlider<V extends ISliderValues> extends CoreSlider<IMultiRangeSliderProps<V>> {
+    public static defaultProps: IMultiRangeSliderProps<any> = {
         ...CoreSlider.defaultProps,
         defaultTrackIntent: Intent.NONE,
     };
 
     public static displayName = "Blueprint2.MultiRangeSlider";
-    public className = classNames(Classes.SLIDER, Classes.MULTI_RANGE_SLIDER);
 
+    public static ofType<V extends ISliderValues>() {
+        return MultiRangeSlider as new (props: IMultiRangeSliderProps<V>) => MultiRangeSlider<V>;
+    }
+
+    public className = classNames(Classes.SLIDER, Classes.MULTI_RANGE_SLIDER);
     private handles: Handle[] = [];
 
-    public componentWillReceiveProps(nextProps: IMultiRangeSliderProps & { children: React.ReactNode }) {
+    public componentWillReceiveProps(nextProps: IMultiRangeSliderProps<V>) {
         super.componentWillReceiveProps(nextProps);
         if (getHandles(nextProps).length !== this.getHandles().length) {
             this.handles = [];
         }
     }
 
-    protected validateProps(props: IMultiRangeSliderProps) {
-        let anyNonHandleChildren = false;
-        React.Children.forEach(props.children, child => {
-            if (child != null && !Utils.isElementOfType(child, SliderHandle)) {
-                anyNonHandleChildren = true;
-            }
-        });
-        if (anyNonHandleChildren) {
-            throw new Error(Errors.MULTIRANGESLIDER_INVALID_CHILD);
-        }
-    }
-
     protected renderFill() {
-        const minHandle: ISliderHandleProps = { value: this.props.min };
-        const maxHandle: ISliderHandleProps = { value: this.props.max };
+        const minHandle: ISliderHandleValueProps = { value: this.props.min };
+        const maxHandle: ISliderHandleValueProps = { value: this.props.max };
         const expandedHandles = [minHandle, ...this.getSortedHandles(), maxHandle];
 
         const tracks: Array<JSX.Element | null> = [];
@@ -113,7 +131,12 @@ export class MultiRangeSlider extends CoreSlider<IMultiRangeSliderProps> {
         }
     }
 
-    private renderTrackFill(index: number, start: ISliderHandleProps, end: ISliderHandleProps, intent: Intent) {
+    private renderTrackFill(
+        index: number,
+        start: ISliderHandleValueProps,
+        end: ISliderHandleValueProps,
+        intent: Intent,
+    ) {
         const { tickSizeRatio } = this.state;
         const startValue = start.value;
         const endValue = end.value;
@@ -183,34 +206,53 @@ export class MultiRangeSlider extends CoreSlider<IMultiRangeSliderProps> {
         const oldValues = this.getSortedHandles().map(handle => handle.value);
         const newValues = values.slice().sort((left, right) => left - right);
         if (!Utils.arraysEqual(newValues, oldValues) && Utils.isFunction(this.props.onChange)) {
-            this.props.onChange(newValues);
+            this.props.onChange(this.computeSliderValues(newValues));
         }
     };
 
     private handleRelease = (values: number[]) => {
         if (Utils.isFunction(this.props.onRelease)) {
             const newValues = values.slice().sort((left, right) => left - right);
-            this.props.onRelease(newValues);
+            this.props.onRelease(this.computeSliderValues(newValues));
         }
     };
 
-    private getSortedHandles(): ISliderHandleProps[] {
+    private computeSliderValues(sortedValues: number[]): V {
+        const values: Partial<V> = {};
+        const keys: Array<keyof V> = Object.keys(this.props.values);
+        for (let index = 0; index < keys.length; index++) {
+            const key = keys[index];
+            const value = sortedValues[index];
+            values[key] = value;
+        }
+        return values as V;
+    }
+
+    private getSortedHandles(): Array<IKeyedSliderHandleValueProps<V>> {
         const handles = this.getHandles();
         return handles.sort((left, right) => left.value - right.value);
     }
 
-    private getHandles(): ISliderHandleProps[] {
+    private getHandles(): Array<IKeyedSliderHandleValueProps<V>> {
         return getHandles(this.props);
     }
 }
 
-function getHandles({ children }: IMultiRangeSliderProps): ISliderHandleProps[] {
-    const maybeHandles = React.Children.map(
-        children,
-        child => (Utils.isElementOfType(child, SliderHandle) ? child.props : null),
-    );
-    const handles = maybeHandles != null ? maybeHandles : [];
-    return handles.filter(handle => handle !== null);
+function getHandles<V extends ISliderValues>(props: IMultiRangeSliderProps<V>): Array<IKeyedSliderHandleValueProps<V>> {
+    const { values, getHandleProps } = props;
+    const handles: Array<IKeyedSliderHandleValueProps<V>> = [];
+    for (const key in values) {
+        if (values.hasOwnProperty(key)) {
+            const value = values[key];
+            const handleProps = Utils.isFunction(getHandleProps) ? Utils.safeInvoke(getHandleProps, key) : {};
+            handles.push({
+                key,
+                value,
+                ...handleProps,
+            });
+        }
+    }
+    return handles;
 }
 
 function argMin<T>(values: T[], argFn: (value: T) => any): T | undefined {

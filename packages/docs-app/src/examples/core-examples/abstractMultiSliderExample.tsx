@@ -6,10 +6,10 @@
 
 import * as React from "react";
 
-import { Classes, Intent, ISliderHandleProps, Label, MultiRangeSlider, SliderHandle, Switch } from "@blueprintjs/core";
+import { Classes, Intent, ISliderHandleProps, Label, MultiRangeSlider, Switch } from "@blueprintjs/core";
 import { Example, handleBooleanChange, handleStringChange, IExampleProps } from "@blueprintjs/docs-theme";
 
-interface ISliderValues {
+interface IIntentBounds {
     dangerStart: number;
     warningStart: number;
     warningEnd: number;
@@ -22,11 +22,13 @@ type TailOption = "lower" | "upper" | "both" | "neither";
 interface IMultiSliderExampleState {
     intent: IntentOption;
     tail: TailOption;
-    values?: ISliderValues;
+    values?: IIntentBounds;
     vertical?: boolean;
 }
 
 export type ConcreteHandleProps = Pick<ISliderHandleProps, "trackIntentBefore" | "trackIntentAfter">;
+
+const IntentBoundsSlider = MultiRangeSlider.ofType<Partial<IIntentBounds>>();
 
 // tslint:disable:object-literal-sort-keys
 export abstract class AbstractMultiSliderExample extends React.PureComponent<IExampleProps, IMultiSliderExampleState> {
@@ -49,20 +51,17 @@ export abstract class AbstractMultiSliderExample extends React.PureComponent<IEx
     public render() {
         return (
             <Example options={this.renderOptions()} {...this.props}>
-                <MultiRangeSlider
+                <IntentBoundsSlider
+                    defaultTrackIntent={this.getDefaultTrackIntent()}
+                    getHandleProps={this.getSliderHandlerProps}
                     min={0}
                     max={100}
                     stepSize={2}
                     labelStepSize={20}
                     onChange={this.handleChange}
                     vertical={this.state.vertical}
-                    defaultTrackIntent={this.getDefaultTrackIntent()}
-                >
-                    {this.renderDangerStartHandle()}
-                    {this.renderWarningStartHandle()}
-                    {this.renderWarningEndHandle()}
-                    {this.renderDangerEndHandle()}
-                </MultiRangeSlider>
+                    values={this.getSliderValues()}
+                />
             </Example>
         );
     }
@@ -73,54 +72,58 @@ export abstract class AbstractMultiSliderExample extends React.PureComponent<IEx
     protected abstract getWarningEndHandleProps(): ConcreteHandleProps;
     protected abstract getDangerEndHandleProps(): ConcreteHandleProps;
 
-    private renderDangerStartHandle() {
+    private getSliderHandlerProps = (key: keyof IIntentBounds): ISliderHandleProps => {
+        switch (key) {
+            case "dangerStart":
+                return { type: "start", ...this.getDangerStartHandleProps() };
+            case "warningStart":
+                return { type: "start", ...this.getWarningStartHandleProps() };
+            case "warningEnd":
+                return { type: "end", ...this.getWarningEndHandleProps() };
+            case "dangerEnd":
+                return { type: "end", ...this.getDangerEndHandleProps() };
+        }
+    };
+
+    private getSliderValues(): Partial<IIntentBounds> {
+        return {
+            ...this.getDangerStartHandleValue(),
+            ...this.getWarningStartHandleValue(),
+            ...this.getWarningEndHandleValue(),
+            ...this.getDangerEndHandleValue(),
+        };
+    }
+
+    private getDangerStartHandleValue() {
         const { intent, tail, values } = this.state;
         if (intent === "warning" || tail === "upper" || tail === "neither") {
-            return null;
+            return {};
         }
-        return (
-            <SliderHandle
-                key="danger-start"
-                type="start"
-                value={values.dangerStart}
-                {...this.getDangerStartHandleProps()}
-            />
-        );
+        return { dangerStart: values.dangerStart };
     }
 
-    private renderWarningStartHandle() {
+    private getWarningStartHandleValue() {
         const { intent, tail, values } = this.state;
         if (intent === "danger" || tail === "upper" || tail === "neither") {
-            return null;
+            return {};
         }
-        return (
-            <SliderHandle
-                key="warning-start"
-                type="start"
-                value={values.warningStart}
-                {...this.getWarningStartHandleProps()}
-            />
-        );
+        return { warningStart: values.warningStart };
     }
 
-    private renderWarningEndHandle() {
+    private getWarningEndHandleValue() {
         const { intent, tail, values } = this.state;
         if (intent === "danger" || tail === "lower" || tail === "neither") {
-            return null;
+            return {};
         }
-        return (
-            <SliderHandle key="warning-end" type="end" value={values.warningEnd} {...this.getWarningEndHandleProps()} />
-        );
+        return { warningEnd: values.warningEnd };
     }
 
-    private renderDangerEndHandle() {
+    private getDangerEndHandleValue() {
         const { intent, tail, values } = this.state;
         if (intent === "warning" || tail === "lower" || tail === "neither") {
-            return null;
+            return {};
         }
-        return (
-            <SliderHandle key="danger-end" type="end" value={values.dangerEnd} {...this.getDangerEndHandleProps()} />
-        );
+        return { dangerEnd: values.dangerEnd };
     }
 
     private renderOptions() {
@@ -150,72 +153,12 @@ export abstract class AbstractMultiSliderExample extends React.PureComponent<IEx
         );
     }
 
-    private handleChange = (newValues: number[]) => {
-        const updatedValues = this.getUpdatedValues(newValues);
+    private handleChange = (updatedValues: Partial<IIntentBounds>) => {
         const valuesMap = { ...this.state.values, ...updatedValues };
-        const values = Object.keys(valuesMap).map((key: keyof ISliderValues) => valuesMap[key]);
-        values.sort((a, b) => a - b);
-        const [dangerStart, warningStart, warningEnd, dangerEnd] = values;
-        this.setState({ values: { dangerStart, warningStart, warningEnd, dangerEnd } });
+        const valuesArray = Object.keys(valuesMap).map((key: keyof IIntentBounds) => valuesMap[key]);
+        valuesArray.sort((a, b) => a - b);
+        const [dangerStart, warningStart, warningEnd, dangerEnd] = valuesArray;
+        const values = { dangerStart, warningStart, warningEnd, dangerEnd };
+        this.setState({ values });
     };
-
-    private getUpdatedValues(values: number[]): Partial<ISliderValues> {
-        const { intent, tail } = this.state;
-        if (tail === "neither") {
-            return {};
-        }
-        switch (intent) {
-            case "both": {
-                switch (tail) {
-                    case "both": {
-                        const [dangerStart, warningStart, warningEnd, dangerEnd] = values;
-                        return { dangerStart, warningStart, warningEnd, dangerEnd };
-                    }
-                    case "lower": {
-                        const [dangerStart, warningStart] = values;
-                        return { dangerStart, warningStart };
-                    }
-                    case "upper": {
-                        const [warningEnd, dangerEnd] = values;
-                        return { warningEnd, dangerEnd };
-                    }
-                }
-                break;
-            }
-            case "danger": {
-                switch (tail) {
-                    case "both": {
-                        const [dangerStart, dangerEnd] = values;
-                        return { dangerStart, dangerEnd };
-                    }
-                    case "lower": {
-                        const [dangerStart] = values;
-                        return { dangerStart };
-                    }
-                    case "upper": {
-                        const [dangerEnd] = values;
-                        return { dangerEnd };
-                    }
-                }
-                break;
-            }
-            case "warning": {
-                switch (tail) {
-                    case "both": {
-                        const [warningStart, warningEnd] = values;
-                        return { warningStart, warningEnd };
-                    }
-                    case "lower": {
-                        const [warningStart] = values;
-                        return { warningStart };
-                    }
-                    case "upper": {
-                        const [warningEnd] = values;
-                        return { warningEnd };
-                    }
-                }
-            }
-        }
-        return {};
-    }
 }
